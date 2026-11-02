@@ -247,3 +247,74 @@ The architecture separates frontend presentation, backend processing, database s
 Terraform provides repeatable infrastructure deployment, while IAM and secure parameter storage help protect the application.
 
 This architecture is designed to support a small academic project while keeping infrastructure simple and cost-efficient.
+## 9. Data Flow Diagram
+
+The Data Flow Diagram illustrates how information moves through the Ad Creative Generator application.
+
+It describes the complete request lifecycle, from user input to AI-generated advertising content and database storage.
+
+---
+
+
+### 9.1 Data Flow Architecture
+
+```mermaid
+flowchart TD
+    A[User enters advertising brief]
+    B[Frontend form]
+    C[API Gateway]
+    D[Lambda Function]
+    E[Parameter Store]
+    F[Google Gemini API]
+    G[DynamoDB]
+    H[Generated content displayed]
+
+    A --> B
+    B -->|POST /generate| C
+    C --> D
+    D -->|Retrieve API key| E
+    E -->|Secure API key| D
+    D -->|Send prompt and brief| F
+    F -->|Return generated variants| D
+    D -->|Save brief and results| G
+    D -->|JSON response| C
+    C --> H
+```
+
+### 9.2 Data Processing Steps
+
+1. **User Input:** The user enters product information, target audience, campaign goal, tone, platform, and constraints.
+
+2. **Frontend:** The application collects the information and sends it to the backend through an HTTP POST request.
+
+3. **API Gateway:** Receives the request and invokes the Lambda function.
+
+4. **Lambda Processing:** Validates the input and prepares the AI prompt.
+
+5. **Secret Retrieval:** Lambda retrieves the Gemini API key from AWS Systems Manager Parameter Store.
+
+6. **AI Generation:** Lambda sends the prompt to Google Gemini API and receives generated advertising variants.
+
+7. **Database Storage:** Lambda stores the original brief and generated content in Amazon DynamoDB.
+
+8. **Response:** The generated results are returned to the frontend in JSON format and displayed to the user.
+
+### 9.3 Data Storage
+
+The application uses Amazon DynamoDB to store:
+
+* Request ID.
+* Creation timestamp.
+* Original advertising brief.
+* Generated headlines.
+* Subheadlines.
+* Advertising bullet points.
+* Calls to action.
+
+The stored information can later be retrieved through the GET /history endpoint.
+
+### 9.4 Data Flow Conclusion
+
+The data flow separates user interaction, backend processing, AI generation, and database storage.
+
+This architecture allows each component to perform a specific function while maintaining a clear communication process.
