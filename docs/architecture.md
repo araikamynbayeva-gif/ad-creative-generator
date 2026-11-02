@@ -205,19 +205,57 @@ The backend and frontend teams must use this contract during development.
 
 ## 6. Security Considerations
 
-Security is an important part of the project architecture.
+Security is an important part of the Ad Creative Generator architecture.
 
-The following measures are planned:
+The project uses several security measures to protect application resources and sensitive information.
 
-* HTTPS is used for secure communication.
-* IAM roles provide controlled access to AWS resources.
-* Lambda receives only the permissions required for its tasks.
-* Gemini API keys are stored securely in AWS Systems Manager Parameter Store.
-* Sensitive information must not be committed to GitHub.
-* S3 frontend storage should not expose private infrastructure files.
-* Terraform state must be stored in a protected S3 bucket.
+### 6.1 API Key Protection
 
-The project follows the principle of least privilege.
+The Google Gemini API key is stored in AWS Systems Manager Parameter Store as a SecureString parameter.
+
+The Lambda function retrieves the key when it needs to communicate with the Gemini API.
+
+The API key is not stored directly in the source code, GitHub repository, or Terraform configuration files.
+
+### 6.2 Why Parameter Store Instead of Secrets Manager?
+
+AWS Systems Manager Parameter Store was selected to store the Gemini API key.
+
+The main reasons are:
+
+* Parameter Store supports encrypted SecureString parameters.
+* It integrates with AWS IAM permissions.
+* It uses AWS KMS for encryption.
+* Standard parameters do not have a monthly storage charge.
+* It is suitable for a small academic project with a limited number of secrets.
+
+AWS Secrets Manager provides additional capabilities, such as automatic secret rotation and dedicated secret lifecycle management.
+
+However, Secrets Manager charges for stored secrets, while Standard Parameter Store parameters have no additional parameter storage fee.
+
+For this project, Parameter Store provides the required functionality with a simpler and more cost-efficient approach.
+
+### 6.3 IAM Permissions
+
+The Lambda execution role follows the principle of least privilege.
+
+It receives only the permissions necessary to:
+
+* Read the specific Gemini API key from Parameter Store.
+* Decrypt the SecureString parameter using the required KMS permissions.
+* Write generated content to DynamoDB.
+* Read generation history from DynamoDB.
+* Write execution logs to CloudWatch.
+
+### 6.4 Additional Security Measures
+
+* HTTPS is used for communication.
+* Sensitive keys must never be committed to GitHub.
+* AWS IAM controls access to cloud resources.
+* Terraform state is stored in a protected S3 bucket.
+* Security Groups control network traffic where applicable.
+
+These measures help protect application data and cloud infrastructure.
 
 ---
 
